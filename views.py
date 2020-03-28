@@ -1,7 +1,9 @@
 from django.http import HttpResponseNotAllowed
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
+from rest_framework.authentication import TokenAuthentication
 from rest_framework.filters import SearchFilter, OrderingFilter
+from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticatedOrReadOnly, DjangoModelPermissions
 from rest_framework.response import Response
 from rest_framework.decorators import action
 
@@ -23,6 +25,7 @@ class CustomerViewSet(viewsets.ModelViewSet):
     ordering_fields = ('id', 'name')
     ordering = ('-id',)
     lookup_field = ('name')
+    authentication_classes = [TokenAuthentication, ]
 
     def get_queryset(self):
         address = self.request.query_params.get('address', None)
@@ -50,18 +53,18 @@ class CustomerViewSet(viewsets.ModelViewSet):
 
     # return HttpResponseNotAllowed('Not allowed.')
 
-    def create(self, request, *args, **kwargs):
-        data = request.data
-        customer = Customer.objects.create(
-            name=data['name'], address=data['address'], data_sheet_id=data['data_sheet']
-        )
-        profession = Profession.objects.get(id=data['profession'])
-        customer.professions.add(profession)
+    #def create(self, request, *args, **kwargs):
+    #    data = request.data
+    #    customer = Customer.objects.create(
+    #        name=data['name'], address=data['address'], data_sheet_id=data['data_sheet']
+    #    )
+    #    profession = Profession.objects.get(id=data['profession'])
+    #    customer.professions.add(profession)
 
-        customer.save()
+    #    customer.save()
 
-        serializer = CustomerSerializer(customer)
-        return Response(serializer.data)
+    #    serializer = CustomerSerializer(customer)
+    #    return Response(serializer.data)
 
     def update(self, request, *args, **kwargs):
         customer = self.get_object()
@@ -137,13 +140,19 @@ class CustomerViewSet(viewsets.ModelViewSet):
 class ProfessionViewSet(viewsets.ModelViewSet):
     queryset = Profession.objects.all()
     serializer_class = ProfessionSerializer
+    authentication_classes = [TokenAuthentication, ]
+    permission_classes = [IsAdminUser, ]
 
 
 class DataSheetViewSet(viewsets.ModelViewSet):
     queryset = DataSheet.objects.all()
     serializer_class = DataSheetSerializer
+    permission_classes = [AllowAny, ]
 
 
 class DocumentViewSet(viewsets.ModelViewSet):
     queryset = Document.objects.all()
     serializer_class = DocumentSerializer
+    authentication_classes = [TokenAuthentication, ]
+    permission_classes = [DjangoModelPermissions, ]
+
